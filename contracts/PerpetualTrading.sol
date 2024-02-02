@@ -38,6 +38,10 @@ contract PerpSwap is Ownable {
     event ShortOpened();
     event ShortClosed();
     event RewardPaid(address indexed trader, uint256 reward);
+    event uptadeCumulativeMarketVolume(uint256 newVolume);
+    event updateRewardPerSecond(uint256 rewardAmount);
+    event updateTradingvolume(address trader, uint256 amount);
+
 
     constructor(
         address _liquidityPool,
@@ -57,6 +61,8 @@ contract PerpSwap is Ownable {
     }
 
     function openLong(uint256 amountBToBuy, uint256 leverage) external {
+        require(amountBToBuy > 0, "Amount to buy must be greater than zero");
+        require(leverage >= 1, "Leverage must be greater than or equal to 1");
         uint256 amountAToSell = orderBook.calcAmountToSell(
             address(tokenA),
             address(tokenB),
@@ -96,6 +102,8 @@ contract PerpSwap is Ownable {
     }
 
     function openShort(uint256 amountAToSell, uint leverage) external {
+        require(amountAToSell > 0, "Amount to sell must be greater than zero");
+        require(leverage >= 1, "Leverage must be greater than or equal to 1");
         liquidityPool.borrow(amountAToSell * leverage);
 
         shortDebtA += amountAToSell * leverage;
@@ -148,7 +156,6 @@ contract PerpSwap is Ownable {
         uint256 reward = calculateReward(trader);
         require(reward > 0, "No reward for this period");
         uint256 volume = _cumulativeTradingVolume[trader];
-        require(volume > 0, "Trading volume not yet");
 
         _cumulativeTradingVolume[trader] = 0;
         if (trader == owner()) {
@@ -179,12 +186,14 @@ contract PerpSwap is Ownable {
         uint256 amount
     ) public onlyOwner {
         _updateTradingVolume(trader, amount);
+        emit updateTradingvolume(trader, amount);
     }
 
     function setRewardPerSecond(
         uint256 rewardAmount
     ) public onlyOwner returns (uint256) {
         _rewardPerSecond = rewardAmount;
+        emit updateRewardPerSecond(rewardAmount);
         return _rewardPerSecond;
     }
 
@@ -192,6 +201,7 @@ contract PerpSwap is Ownable {
         uint256 newVolume
     ) external onlyOwner returns(uint256) {
         _cumulativeMarketVolume = newVolume;
+        emit uptadeCumulativeMarketVolume(newVolume);
         return newVolume;
     }
 }

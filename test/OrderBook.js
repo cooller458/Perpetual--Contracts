@@ -12,8 +12,10 @@ describe("SimpleOrderBook Contract", function () {
     const Token = await ethers.getContractFactory("MockToken");
     sellToken = await Token.deploy("SellToken", "ST", 18);
     buyToken = await Token.deploy("BuyToken", "BT", 18);
+    reserve = await Token.deploy("Reserve", "RSV", 18);
     await sellToken.deployed();
     await buyToken.deployed();
+    await reserve.deployed();
     await sellToken.connect(owner).mint(owner.address, ethers.utils.parseUnits("2000000000", 18));
     await buyToken.connect(owner).mint(owner.address, ethers.utils.parseUnits("2000000000", 18));
     const ownerBalanceBuy = await buyToken.balanceOf(owner.address);
@@ -52,6 +54,11 @@ describe("SimpleOrderBook Contract", function () {
       const expectedSellAmount = reserveA.mul(buyAmount).div(reserveB.sub(buyAmount)); 
       expect(sellAmount).to.equal(expectedSellAmount);
     });
+    it("should Insufficient reserve for buy amount", async function () {
+      const buyAmount = ethers.utils.parseUnits("100000000000", 18);
+      await expect(simpleOrderBook.calcAmountToSell(sellToken.address, buyToken.address, buyAmount)).to.be.revertedWith("Insufficient reserve for buy amount");
+      
+      });
   });
 
   describe("calcAmountToBuy", function () {
@@ -67,7 +74,16 @@ describe("SimpleOrderBook Contract", function () {
 
         expect(buyAmount).to.equal(expectedBuyAmount);
     });
+    describe("calcAmountToBuy", function () {
+      it("should revert with 'Invalid sell amount or reserve' if there is no sell token reserve", async function () {
+        const sellAmount = ethers.utils.parseUnits("0", 18);
+    
+        await expect(simpleOrderBook.calcAmountToBuy(reserve.address, buyToken.address, sellAmount))
+          .to.be.revertedWith("Invalid sell amount or reserve");
+      });
+    });
   });
+
 
   describe("buy", function () {
     it("should allow a user to buy tokens", async function () {
