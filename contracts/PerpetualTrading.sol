@@ -146,7 +146,6 @@ contract PerpSwap is Ownable {
         return traderShare * rewardForThePeriod; 
     }
 
-    // Ödül ödemesi için fonksiyon
     function payReward(address trader) external {
         require(
             block.timestamp >= _periodStartTimestamp + PERIOD_LENGTH,

@@ -42,7 +42,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     
 
-    // PerpSwap sözleşmesini dağıt
+
     await deploy('PerpSwap', {
         contract: 'PerpSwap', // Sözleşme adı
         from: deployer.address,
